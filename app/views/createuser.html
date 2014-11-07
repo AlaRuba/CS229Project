@@ -1,0 +1,14 @@
+<link rel="stylesheet" href="styles/createuser.css">
+<script src="scripts/lib/pwstrength.js"></script>
+<form ng-cloak ng-if="!user" ng-init="loadPasswordChecker()" class="form-signin" role="form">
+
+  <h2 class="form-signin-heading">Create New User</h2>
+  <input type="username" class="form-control" ng-model="user.username" placeholder="Full Name" required="" autofocus="">
+  <input type="email" class="form-control" ng-model="user.email" placeholder="Email address" required="" autofocus="">
+  <input type="password" class="form-control" ng-model="user.password" placeholder="Password" required="">
+  <button class="btn btn-lg btn-primary btn-block" ng-click="create_user(user)">Create New User</button>
+
+  <button class="hidden" ng-click="create_user(user)"></button>
+  <!-- For some reason, we need this hidden button to get proper click functionality -->
+</form>
+

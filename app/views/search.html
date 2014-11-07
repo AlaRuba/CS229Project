@@ -1,0 +1,33 @@
+<br>
+<div class="row">
+  <div class="col-sm-3 col-xs-6">
+    <img class="img-responsive" src="images/logo.svg">
+  </div>
+  <div class="col-sm-9 col-xs-12">
+    <blockquote>
+      <p class="lead">
+        Put my knowledge to the test. Try asking me something? Anything!?!
+      </p>
+    </blockquote>
+  </div>
+</div>
+<br><br>
+<form ng-submit="searchGraph()">
+      <input type="text" ng-model="inputText"  size="90%"
+             placeholder="Ask me something here!">
+      <input class="btn-primary" type="submit" value="Search">
+</form>
+<br>
+<span ng-show="hasSearched">
+  I'm thinking...
+</span> 
+<span ng-show="hasAnswered">
+  Your Question: {{originalText}}
+  <br><br>
+  Answer: {{outputText}}
+</span> 
+<span ng-show="hasError">
+  ERROR, Please try again.
+</span> 
+<br><br>
+<br>

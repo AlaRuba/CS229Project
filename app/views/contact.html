@@ -1,0 +1,22 @@
+<div class="row">
+  <div class="col-sm-8 col-sm-offset-2 col-xs-12">
+    <br>
+    <h3 class="text-center">Contact Us</h3>
+    <br>
+    <p>
+      We welcome all technical and press inquiries. Please contact us at the emails below and
+      we'll respond as soon as we can.
+    </p>
+    <br>
+    <div class="row text-center">
+      <div class="col-sm-6 col-xs-12" ng-repeat="c in contacts">
+        <strong>{{ c.name }}</strong><br>
+        {{ c.email }}<br>
+        {{ c.address }}<br>
+        {{ c.street }}<br>
+        {{ c.state }}, {{ c.zip }}<br><br><br>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,300 @@
+/* Bootstrap variables */
+$navbar-height: 50px;
+$brand-primary: #34495e;
+$text-color: $brand-primary;
+$link-color: $brand-primary;
+$navbar-default-bg: #ecf0f1;
+$jumbotron-bg: $navbar-default-bg;
+$navbar-default-link-color: $brand-primary;
+$navbar-default-link-hover-color: #16a085;
+$navbar-default-brand-hover-color: $navbar-default-link-hover-color;
+$feed-border-top-width: 8px;
+
+$icon-font-path: "../bower_components/bootstrap-sass-official/assets/fonts/bootstrap/";
+// bower:scss
+@import "bootstrap-sass-official/assets/stylesheets/bootstrap.scss";
+// endbower
+
+.browsehappy {
+  margin: 0.2em 0;
+  background: #ccc;
+  color: #000;
+  padding: 0.2em 0;
+}
+
+/* Fix for bootstrap grid shift */
+html {
+  overflow-y: scroll;
+}
+
+/* Space out content a bit */
+body {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* Everything but the jumbotron gets side spacing for mobile first views */
+.header,
+.marketing,
+.footer {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Custom page header */
+.header {
+  border-bottom: 1px solid #e5e5e5;
+
+  /* Make the masthead heading the same height as the navigation */
+  h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 40px;
+    padding-bottom: 19px;
+  }
+}
+
+/* Custom page footer */
+.footer {
+  padding-top: 19px;
+  color: #777;
+  border-top: 1px solid #e5e5e5;
+}
+
+.container-narrow > hr {
+  margin: 30px 0;
+}
+
+/* Main marketing message and sign up button */
+.jumbotron {
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+
+  .btn {
+    font-size: 21px;
+    padding: 14px 24px;
+  }
+}
+
+/* Supporting marketing content */
+.marketing {
+  margin: 40px 0;
+
+  p + h4 {
+    margin-top: 28px;
+  }
+}
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+  .container {
+    max-width: 730px;
+  }
+
+  /* Remove the padding we set earlier */
+  .header,
+  .marketing,
+  .footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  /* Space out the masthead */
+  .header {
+    margin-bottom: 30px;
+  }
+  /* Remove the bottom border on the jumbotron for visual effect */
+  .jumbotron {
+    border-bottom: 0;
+  }
+}
+
+/* Navbar with no border */
+.no-border {
+  border: 0px hidden;
+}
+
+/* Brand */
+.brand-logo {
+  height: $navbar-height * 0.8;
+  margin-top: -$navbar-height * 0.2;
+}
+
+.brand-text {
+  font-size: $navbar-height * 0.5;
+}
+
+/* Contributor profile */
+.contrib {
+  height: 275px;
+}
+
+.contrib-pic {
+  @extend .img-responsive;
+  border: 1px solid #aaa;
+  border-radius: 50%;
+}
+
+.img-center {
+  margin: 0 auto;
+}
+
+/* Sponsor logos */
+.sponsor-logo {
+  @extend .img-responsive;
+  display: inline-block;
+  padding: 20px;
+  height: 125px;
+}
+
+.news-logo {
+  @extend .img-responsive;
+  display: inline-block;
+  padding: 10px;
+  height: 50px;
+}
+
+/* Feed styles */
+.feed-0 {
+  height: 100%;
+  border-top-color: #E74C3C;
+  border-top-width: $feed-border-top-width;
+}
+
+.feed-1 {
+  height: 100%;
+  border-top-color: #2ECC71;
+  border-top-width: $feed-border-top-width;
+}
+
+.feed-2 {
+  height: 100%;
+  border-top-color: #F1C40F;
+  border-top-width: $feed-border-top-width;
+}
+
+.feed-3 {
+  height: 100%;
+  border-top-color: #8E44AD;
+  border-top-width: $feed-border-top-width;
+}
+
+.feed-4 {
+  height: 100%;
+  border-top-color: #D35400;
+  border-top-width: $feed-border-top-width;
+}
+
+.feed-image {
+  @extend .img-responsive;
+  display: inline-block;
+  padding: 25px;
+  border-radius: 5px;
+  height: 250px;
+}
+
+.feed-iframe {
+  height: 550px;
+  width: 100%;
+}
+
+.feed-iframe-comments {
+  display: block;
+  border: none;
+  height: 100%;
+  width: 100%;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    padding-top: 30px; height: 0; overflow: hidden;
+}
+
+.video-container iframe,
+.video-container object,
+.video-container embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.video {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.vote {
+  border: none;
+  display: inline-block;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.vote:hover {
+  text-decoration: none;
+  -webkit-transition: background-color 1s ease-out 1s;
+  -moz-transition: background-color 1s ease-out 1s;
+  -o-transition: background-color 1s ease-out 1s;
+  transition: background-color 1s ease-out 1s;
+  color: #E69980;
+}
+
+.upvote {
+  @extend .vote;
+}
+
+.downvote {
+  @extend .vote;
+}
+
+.comments {
+  @extend .vote;
+}
+
+.social-buttons {
+  padding: 0px 10px;
+  text-align: right;
+  float: right;
+}
+
+.social-button {
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.social-button-text {
+  padding: 5px;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.on {
+  @extend .vote:hover;
+  color:  #A31919;
+}
+
+.label-full {
+  font-size: 90%;
+  text-align: left;
+  padding: 5px 10px;
+  float: left;
+}
+
+.label-link:hover {
+  text-decoration: none;
+}
+
+.label:hover {
+  background-color: #A31919;
+}
+
+
+.login-text {
+  display: inline;
+  font-weight: bold;
+}
+
+

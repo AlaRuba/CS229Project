@@ -1,0 +1,66 @@
+<br>
+<div class="row text-justify">
+  <div class="col-sm-6 col-sm-offset-3 col-xs-12">
+    <h3 class="text-center">So...What's Robo Brain?</h3>
+    <br>
+    <p>
+      Robo Brain is a large-scale
+      computational system that learns from publicly available
+      Internet resources, computer simulations, and real-life robot trials.
+      It accumulates everything robotics
+      into a comprehensive and interconnected knowledge base.
+      Applications include prototyping for robotics research,
+      household robots, and self-driving cars.
+    </p>
+    <p>
+      We hope you are just as excited about this
+      project as we are. For more information,
+      please view the <a ng-href="#/research/">Research</a> page.
+    </p>
+  </div>
+</div>
+<br><br>
+<div class="text-center">
+  <h3>Talk at RSS '14</h3>
+  <br>
+  <div class="video-container">
+    <iframe src="//www.youtube.com/embed/D_EvBEtVodY" frameborder="0" allowfullscreen></iframe>
+  </div>
+  <br><br>
+  <h3>In The Press</h3>
+  <br>
+  <span ng-repeat="n in news">
+    <a ng-href="{{ n.url }}" target="_blank">
+      <img class="news-logo" ng-src="{{ n.logo }}">
+    </a>
+  </span>
+  <br><br>
+  <h3>Thanks To Our Sponsors</h3>
+  <br>
+  <span ng-repeat="s in sponsors_gov">
+    <a ng-href="{{ s.url }}" target="_blank">
+      <img class="sponsor-logo" ng-src="{{ s.logo }}">
+    </a>
+  </span>
+  <br>
+  <span ng-repeat="s in sponsors_tech">
+    <a ng-href="{{ s.url }}" target="_blank">
+      <img class="sponsor-logo" ng-src="{{ s.logo }}">
+    </a>
+  </span>
+  <br>
+  <span ng-repeat="s in sponsors_misc">
+    <a ng-href="{{ s.url }}" target="_blank">
+      <img class="sponsor-logo" ng-src="{{ s.logo }}">
+    </a>
+  </span>
+  <br>
+  <span ng-repeat="s in sponsors_schools">
+    <a ng-href="{{ s.url }}" target="_blank">
+      <img class="sponsor-logo" ng-src="{{ s.logo }}">
+    </a>
+  </span>
+</div>
+<br>
+
+

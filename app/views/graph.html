@@ -1,0 +1,638 @@
+<style>
+
+.node {
+  stroke: #1f77b4;
+  stroke-width: 1.5px;
+  transform-style: preserve-3d;
+}
+
+p.id {
+  font-color: red;
+}
+
+.node.selected {
+  fill: #f00;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+  transform-style: preserve-3d;
+}
+
+svg.viz {
+  border-style: solid;
+  border-width: 5px;
+}
+.tooltip {
+    pointer-events:none; /*let mouse events pass through*/
+    transition: opacity 0.3s;
+    text-shadow:1px 1px 0px gray;
+}
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 60px;                  
+  height: 50px;                 
+  padding: 2px;             
+  font: 12px sans-serif;        
+  background: lightsteelblue;   
+  border: 0px;      
+  border-radius: 8px;           
+}
+div.fixed {
+    position:fixed;
+}
+g.tooltip:not(.css) {
+  fill:currentColor;
+}
+g.tooltip rect {
+    fill: lightblue;
+    stroke: gray;
+}
+</style>
+<br>
+<div class="row">
+  <div class="col-sm-3 col-xs-6">
+    <img class="img-responsive" src="images/logo.svg">
+  </div>
+  <div class="col-sm-9 col-xs-12">
+    <blockquote>
+      <p class="lead">
+        Put my knowledge to the test. Try asking me something? Anything!?!
+      </p>
+    </blockquote>
+  </div>
+</div>
+<br>
+<div id="tfheader">
+    <input type="text" id="search" class="tftextinput" name="q" size="21" maxlength="120"><input type="button" value="search" class="tfbutton" onclick="searchText();">
+</div>
+<p id="node-p">Seach for some nodes like shoe or track</p>
+<p id="link-p">Currently under development, might need to wait a couple of seconds for graph to stabilize</p>
+<div id="visualization">
+</div>
+<script src="scripts/lib/d3.min.js"></script>
+<script src="scripts/lib/jquery-1.11.1.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+<script src="scripts/lib/priority-queue.js"></script>
+<script>
+
+var data = {};
+data["nodes"] = [];
+data["links"] = [];
+
+var leftDiv = d3.select("#visualization").append("div") 
+    .attr("class", "tooltip")               
+    .style("opacity", 0)
+    .style("top", "150px");
+
+var leftTopDiv = d3.select("#visualization").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
+
+var leftBottomDiv = d3.select("#visualization").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
+
+
+var rightDiv = d3.select("#visualization").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
+
+var seenNodes = {};
+var queriedHandles = {}
+var seenLinks = {};
+var linkedByIndex = {};
+var id = 0
+var width = 960,
+    height = 500;
+var targetNode = null;
+var initialized = false;
+var toQueryNodes = [];
+
+var color = d3.scale.category20();
+
+var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(30)
+    .size([width, height]);
+
+var feedbackUrl = "http://test.robobrain.me:3000/feed/graph_feedback/"
+
+var svg = d3.select("#visualization").append("svg")
+    .classed("viz",true)
+    .attr("width", width)
+    .attr("height", height)
+    .on("click", stopped, true);
+
+var g = svg.append("g");
+g.append("g").attr("class","links");
+g.append("g").attr("class","nodes");
+
+var zoom = d3.behavior.zoom()
+    .scaleExtent([1, 8])
+    .on("zoom", zoomed);
+
+g
+    .call(zoom) // delete this line to disable free zooming
+    .call(zoom.event);
+
+var popup = null;
+var pQueue = new PriorityQueue({ comparator: function(a, b) { return b.priority - a.priority; }});
+
+
+function zoomed() {
+    g.style("stroke-width", 3.5 / d3.event.scale + "px");
+    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+}
+
+function stopped() {
+  if (d3.event.defaultPrevented) d3.event.stopPropagation();
+}
+var graph = {};
+graph.links = [];
+graph.nodes = [];
+
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([-10, 0])
+  .html(function(d) {
+    return "<strong>Frequency:</strong> <span style='color:red'>" + d.frequency + "</span>";
+  })
+
+g.call(tip);
+
+
+var nodes = force.nodes(),
+    links = force.links();
+
+var patterns = [];
+function convertToCorrectFormat (jsonData) {
+  var cloudfront = "http://d1rygkc2z32bg1.cloudfront.net/";
+  var neo4JSserver = "http://ec2-54-69-173-124.us-west-2.compute.amazonaws.com:7474/";
+  for (var url in jsonData.nodes) {
+    if (!(url in seenNodes)) {
+      var nodeURL = url;
+      nodeURL = url.match(/db\/data\/node\/[0-9]*/g)
+      var newUrl = neo4JSserver+nodeURL
+      if (jsonData.nodes[url]["mediapath"] !== undefined) {
+        nodes.push({"url":newUrl, "handle":jsonData.nodes[url]["handle"],"id":id, "mediapath":jsonData.nodes[url]["mediapath"]});
+        /*  var imageUrl = jsonData.nodes[url]["mediapath"];
+          imageUrl = "http://4.bp.blogspot.com/-JOqxgp-ZWe0/U3BtyEQlEiI/AAAAAAAAOfg/Doq6Q2MwIKA/s1600/google-logo-874x288.png"
+          patterns[id] = svg.append("defs")
+                        .append("pattern")
+                        .attr("id", "bg"+id)
+                        .append("image")
+                        .attr("xlink:href", imageUrl);*/
+      } else {
+        nodes.push({"handle":jsonData.nodes[url]["handle"], "url":newUrl,"id":id, "color": "#1f77b4", "currentState": false});
+      } 
+      pQueue.queue({"handle":jsonData.nodes[url]["handle"], "priority":1})
+      seenNodes[url] = id;
+      id++;
+    }
+  }
+  for (var url in jsonData.links) {
+    if (!(url in seenLinks)) {
+      var source = seenNodes[jsonData.links[url]["start"]];
+
+      var target = seenNodes[jsonData.links[url]["end"]];
+      links.push({"source":source,"target":target,"type":jsonData.links[url]["type"], "color":"#999"});
+      if (source < target) {
+        linkedByIndex[source+","+target]= 1;
+      }
+      else {
+        linkedByIndex[target+","+source]= 1;
+      }
+      seenLinks[url] = "seen";
+    }
+  }
+}
+  function searchText (handle) {
+      if (handle == undefined) {
+        handle = document.getElementById("search").value;
+      }
+      if (initialized == false) {
+        force
+          .nodes(graph.nodes)
+          .links(graph.links)
+          .linkDistance(40)
+          .charge(-400)
+          .start();
+        nodes = force.nodes(),
+        links = force.links();
+        initialized = true;
+        callMe();
+      }
+      if (queriedHandles[handle] != undefined) {
+        return;
+      }
+
+
+      if (nodes == undefined) {
+        nodes = force.nodes;
+      }
+      $.ajax({
+           type: "GET",
+           //url:"http://localhost:8080/get_node/"+handle,
+           url:"http://ec2-54-69-241-26.us-west-2.compute.amazonaws.com:8080/get_node/"+handle, 
+           crossDomain: true,
+           jsonp: false,
+           success:function(jsonData){
+              queriedHandles[handle] = true; 
+              // do stuff with json (in this case an array)
+              convertToCorrectFormat(jsonData)
+              useData = JSON.stringify(data)
+              newGraph = JSON.parse(useData)
+              var drag = force.drag()
+                  .on("dragstart", dragstart);
+
+              var link = g.select(".links").selectAll("line.link");
+              link = link.data(links, function(d) {return d.source + "-" + d.target;});
+              link.enter()
+              .append("line").attr("class", "link")
+              .attr("id", function(d) {
+                var id = "link"+d.source + "to" + d.target;
+        
+                return id;
+              })
+              .style("stroke-width", function(d) { return "2px"; })
+              .on("click", clickedLink)
+              .on("mouseover", function(d) {
+                d3.select("#link-p").text("Current Link. From:" + d.source.handle + " To:" + d.target.handle + " Type: "+ d.type);
+                
+                var sourceId = d.source.id;  
+                var sourceCircle = d3.select("#node"+sourceId);
+                sourceCircle.style("fill", "green");  
+                sourceCircle.classed("fixed", d.fixed = true);
+
+                var targetId = d.target.id;  
+                var targetCircle = d3.select("#node"+targetId);
+                targetCircle.style("fill", "green"); 
+                targetCircle.classed("fixed", d.fixed = true);
+
+
+                
+                var id = "link"+d.source.id + "to" + d.target.id;
+                var rod = d3.select("#"+id);
+       
+                rod.attr("style", "fill:green; stroke:green;stroke-width:2px");
+                rod.classed("fixed", d.fixed = true);
+
+                 var x = (d.target.x + d.source.x)/2;
+                  var y = (d.target.y + d.source.y)/2;
+                      var dx = Math.abs(d.target.x - d.source.x)+50;
+                      var dy = Math.abs(d.target.y - d.source.y)+50;
+                      var scale = .7 / Math.max(dx / width, dy / height);
+                      var translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+                      g.transition()
+                          .duration(750)
+                          .call(zoom.translate(translate).scale(scale).event);
+                
+
+              })
+              .on("mouseout", function(d) {
+                var sourceId = d.source.id;  
+                var sourceCircle = d3.select("#node"+sourceId);
+                sourceCircle.style("fill", function(d){
+                  return d.color;
+                });  
+                sourceCircle.classed("fixed", d.fixed = false);
+
+                var targetId = d.target.id;  
+                var targetCircle = d3.select("#node"+targetId);
+                targetCircle.style("fill", function(d) {
+                  return d.color;
+                });  
+                sourceCircle.classed("fixed", d.fixed = false);
+
+                var id = "link"+d.source.id + "to" + d.target.id;
+                var rod = d3.select("#"+id);
+                rod.attr("style", "fill:green; stroke:"+d.color+";stroke-width:2px");
+              });
+
+              //link.exit().remove();
+              var node = g.select(".nodes").selectAll(".node");
+              node = node.data(nodes, function(d) {return d.id;});
+              node.enter().append("circle")
+                  .attr("class", "node").attr("r", 10)
+                  .attr("id", function(d,i) {
+                      return "node"+d.id;
+                  })
+                  .attr("fill", function(d) { 
+                    if (d.mediapath !== undefined) {
+                      return "url(#bg"+d.id+")";
+                    }
+                    return color(d.group); })
+                 /* .call(d3.helper.tooltip(
+                      function(d, i){
+                          return "<b>"+d.handle + "</b>";
+                      }
+                  ))*/
+                  .on("mouseover", function(d) {
+                      d3.select("#node-p").text("Current Node:" + d.handle);   
+                      var id = d.id;  
+                      var circle = d3.select("#node"+id);
+                      circle.style("fill", "green"); 
+                                 
+                  })
+                  .on("mouseout", function(d) {
+                      var id = d.id;  
+                      var circle = d3.select("#node"+id);
+                      circle.style("fill", function(d) {
+                        return d.color;
+                      });
+              })
+                  .on("click", clicked);
+              node.exit().remove();
+              
+
+              force.start();
+
+              force.on("tick", function() {
+
+                      g.select(".links").selectAll(".link")
+                        .attr("x1", function(d) { return d.source.x; })
+                        .attr("y1", function(d) { return d.source.y; })
+                        .attr("x2", function(d) { return d.target.x; })
+                        .attr("y2", function(d) { return d.target.y; });
+
+                      var q = d3.geom.quadtree(graph.nodes),
+                        i = 0,
+                        n = graph.nodes.length;
+
+                      while (++i < n) q.visit(collide(graph.nodes[i]));
+
+                      g.select(".nodes").selectAll(".node").attr("cx", function(d) { return d.x; })
+                        .attr("cy", function(d) { return d.y; });
+                });
+
+                function clickedLink(d) {
+                    /*  if (active.node() === this) return reset();
+                      active.classed("active", false);
+                      active = d3.select(this).classed("active", true);*/
+                      var id = "link"+d.source.id + "to" + d.target.id;
+                      console.log(id);
+                      var rod = d3.select("#"+id);
+                      rod.attr("style","fill:red; stroke:red;stroke-width:2px" );
+                      d.color = "red";
+
+                      //Fix this math
+                      var x = (d.target.x + d.source.x)/2;
+                      var y = (d.target.y + d.source.y)/2;
+                      var dx = Math.abs(d.target.x - d.source.x)+50;
+                      var dy = Math.abs(d.target.y - d.source.y)+50;
+                      var scale = .7 / Math.max(dx / width, dy / height);
+                      var translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+                      g.transition()
+                          .duration(750)
+                          .call(zoom.translate(translate).scale(scale).event);
+
+                      leftDiv.transition()        
+                        .duration(200)      
+                        .style("opacity", .9);
+
+                      leftDiv.html("<p id='bad'>BAD LINK</p>")
+                        .style("left", 400 + "px")     
+                        .style("top", 650 + "px")
+                        .style("pointer-events", "all")
+                        .on("click", function() {
+
+                          $.ajax({
+                              url: feedbackUrl+"?id='"+"link"+d.source.id + "to" + d.target.id+"'&node_handle='"+d.type+"'&action_type='BAD_LINK'&feedback_type='disagee'",                             
+                              type: 'GET',
+                              success: function (resp) {
+                              },
+                              error: function(e) {
+                                  alert('Error: '+e);
+                              }  
+                          });
+
+                          leftDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+
+                          rightDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+
+                        });
+
+                      rightDiv.transition()        
+                        .duration(200)      
+                        .style("opacity", .9);
+
+                      rightDiv.html("<p id='good'>GOOD LINK</p>")
+                        .style("left", 1250 + "px")     
+                        .style("top", 650 + "px")
+                        .style("pointer-events", "all")
+                        .on("click", function() {
+
+                          $.ajax({
+                              url: feedbackUrl+"?id='"+"link"+d.source.id + "to" + d.target.id+"'&node_handle='"+d.type+"'&action_type='GOOD_LINK'&feedback_type='agree'",                             
+                              type: 'GET',
+                              success: function (resp) {
+                              },
+                              error: function(e) {
+                                  alert('Error: '+e);
+                              }  
+                          });
+
+                          rightDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+
+                          leftDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+                        });
+                }
+
+                function clicked(d) {
+                    /*  if (active.node() === this) return reset();
+                      active.classed("active", false);
+                      active = d3.select(this).classed("active", true);*/
+                      console.log(d);
+                      var id = d.id;
+
+                      var circle = d3.select("#node"+id);
+                      circle.style("fill", function(d)  {
+                          d.color = "red";
+                          return d.color;
+                      });
+
+                      
+                      var x = d.x;
+                      var y = d.y;
+                      var dx = 20;
+                      var dy = 20;
+                      var scale = .7 / Math.max(dx / width, dy / height);
+                      var translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+                      g.transition()
+                          .duration(750)
+                          .call(zoom.translate(translate).scale(scale).event);
+                      d3.select(this).classed("fixed", d.fixed = true);
+
+                      leftDiv.transition()        
+                        .duration(200)      
+                        .style("opacity", .9);
+
+                      leftDiv.html("<p id='bad'>BAD NODE</p>")
+                        .style("left", 400 + "px")     
+                        .style("top", 650 + "px")
+                        .style("pointer-events", "all")
+                        .on("click", function(d) {
+
+                          rightDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+                          leftTopDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", .9);
+
+                            leftDiv.html("<p id='bad'>REMOVE NODE</p>")
+                                .style("left", 400 + "px")     
+                                .style("top", 850 + "px")
+                                .style("pointer-events", "all")
+                                .on("click", function(d) {
+
+                                    $.ajax({
+                                        url: feedbackUrl+"?id='"+String(d.id)+"'&node_handle='"+d.handle+"'&action_type='REMOVE_NODE'&feedback_type='disagree'",                             
+                                        type: 'GET',
+                                        success: function (resp) {
+                                        },
+                                        error: function(e) {
+                                        }  
+                                    });
+
+                                    leftTopDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+
+                                    leftDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                });
+                            leftTopDiv.html("<p id='bad'>RENAME NODE</p>")
+                                .style("left", 400 + "px")     
+                                .style("top", 450 + "px")
+                                .style("pointer-events", "all")
+                                .on("click", function(d) {
+
+                                    $.ajax({
+                                        url: feedbackUrl+"?id='"+String(d.id)+"'&node_handle='"+d.handle+"'&action_type='RENAME_NODE'&feedback_type='disagree'",                             
+                                        type: 'GET',
+                                        success: function (resp) {
+                                        },
+                                        error: function(e) {
+                                        }  
+                                    });
+                                    leftDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                    leftTopDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                });
+
+                        });
+
+                      rightDiv.transition()        
+                        .duration(200)      
+                        .style("opacity", .9);
+
+                      rightDiv.html("<p id='good'>GOOD NODE</p>")
+                        .style("left", 1250 + "px")     
+                        .style("top", 650 + "px")
+                        .style("pointer-events", "all")
+                        .on("click", function() {
+                          var feedback = "?id='"+d.id+"'&node_handle='"+d.handle+"'&action_type='GOOD_NODE'&feedback_type='agree'";
+                          console.log(feedback)
+                          $.ajax({
+                              url: feedbackUrl+feedback,                             
+                              type: 'GET',
+                              success: function (resp) {
+                              },
+                              error: function(e) {
+                              }  
+                          });
+
+                          rightDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+
+                          leftDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", 0)
+                            .style("pointer-events", "none");
+                        });
+                }
+
+                function dragstart(d) {
+
+                    d3.select(this).classed("fixed", d.fixed = true);
+                }
+                
+                function collide(node) {
+                      var r = node.radius + 16,
+                          nx1 = node.x - r,
+                          nx2 = node.x + r,
+                          ny1 = node.y - r,
+                          ny2 = node.y + r;
+                      return function(quad, x1, y1, x2, y2) {
+                        if (quad.point && (quad.point !== node)) {
+                          var x = node.x - quad.point.x,
+                              y = node.y - quad.point.y,
+                              l = Math.sqrt(x * x + y * y),
+                              r = node.radius + quad.point.radius;
+                          if (l < r) {
+                            l = (l - r) / l * .5;
+                            node.x -= x *= l;
+                            node.y -= y *= l;
+                            quad.point.x += x;
+                            quad.point.y += y;
+                          }
+                        }
+                        return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+                      };
+                }
+           },
+           error:function(xhr, status, error){
+              var err = eval("(" + xhr.responseText + ")");
+              alert(err.Message);
+           }      
+      });
+  }
+function callMe() {
+    setInterval(function(){
+        try {
+          pQueue.peek();
+        }
+        catch (err){
+          return;
+        }
+        var handle = pQueue.dequeue();
+        handle = handle.handle;
+        searchText(handle)
+    }, 1000);
+}
+
+</script>
