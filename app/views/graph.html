@@ -391,6 +391,16 @@ function convertToCorrectFormat (jsonData) {
                           .duration(750)
                           .call(zoom.translate(translate).scale(scale).event);
 
+                      leftTopDiv.transition()        
+                          .duration(200)      
+                          .style("opacity", 0)
+                          .style("pointer-events", "none");
+
+                      leftBottomDiv.transition()        
+                          .duration(200)      
+                          .style("opacity", 0)
+                          .style("pointer-events", "none");
+
                       leftDiv.transition()        
                         .duration(200)      
                         .style("opacity", .9);
@@ -481,6 +491,11 @@ function convertToCorrectFormat (jsonData) {
                           .call(zoom.translate(translate).scale(scale).event);
                       d3.select(this).classed("fixed", d.fixed = true);
 
+                      leftTopDiv.transition()        
+                          .duration(200)      
+                          .style("opacity", 0)
+                          .style("pointer-events", "none");
+
                       leftDiv.transition()        
                         .duration(200)      
                         .style("opacity", .9);
@@ -489,24 +504,65 @@ function convertToCorrectFormat (jsonData) {
                         .style("left", 400 + "px")     
                         .style("top", 650 + "px")
                         .style("pointer-events", "all")
-                        .on("click", function(d) {
+                        .on("click", function() {
 
                           rightDiv.transition()        
                             .duration(200)      
                             .style("opacity", 0)
                             .style("pointer-events", "none");
+                          
                           leftTopDiv.transition()        
                             .duration(200)      
-                            .style("opacity", .9);
+                            .style("opacity", .9)
+                            .style("pointer-events", "all");
+
+                          leftBottomDiv.transition()        
+                            .duration(200)      
+                            .style("opacity", .9)
+                            .style("pointer-events", "all");
 
                             leftDiv.html("<p id='bad'>REMOVE NODE</p>")
                                 .style("left", 400 + "px")     
+                                .style("top", 650 + "px")
+                                .style("pointer-events", "all")
+                                .on("click", function() {
+                                    var feedback = "?id='"+d.id+"'&node_handle='"+d.handle+"'&action_type='REMOVE_NODE'&feedback_type='disagree'";
+                                    console.log(feedback)
+                                    $.ajax({
+                                        url: feedbackUrl+feedback,                             
+                                        type: 'GET',
+                                        success: function (resp) {
+                                        },
+                                        error: function(e) {
+                                        }  
+                                    });
+
+                                    leftTopDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                    leftBottomDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                    leftDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                });
+
+                            leftBottomDiv.html("<p id='bad'>SPLIT NODE</p>")
+                                .style("left", 400 + "px")     
                                 .style("top", 850 + "px")
                                 .style("pointer-events", "all")
-                                .on("click", function(d) {
-
+                                .on("click", function() {
+                                    var feedback = "?id='"+d.id+"'&node_handle='"+d.handle+"'&action_type='SPLIT_NODE'&feedback_type='disagree'";
+                                    console.log(feedback)
                                     $.ajax({
-                                        url: feedbackUrl+"?id='"+String(d.id)+"'&node_handle='"+d.handle+"'&action_type='REMOVE_NODE'&feedback_type='disagree'",                             
+                                        url: feedbackUrl+feedback,                             
                                         type: 'GET',
                                         success: function (resp) {
                                         },
@@ -521,6 +577,11 @@ function convertToCorrectFormat (jsonData) {
 
 
                                     leftDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                    leftBottomDiv.transition()        
                                       .duration(200)      
                                       .style("opacity", 0)
                                       .style("pointer-events", "none");
@@ -530,10 +591,13 @@ function convertToCorrectFormat (jsonData) {
                                 .style("left", 400 + "px")     
                                 .style("top", 450 + "px")
                                 .style("pointer-events", "all")
-                                .on("click", function(d) {
-
+                                .on("click", function() {
+                 
+                                    var feedback = "?id='"+d.id+"'&node_handle='"+d.handle+"'&action_type='REMOVE_NODE'&feedback_type='disagree'";
+                                    console.log(feedback)
+                                    console.log("CHECK")
                                     $.ajax({
-                                        url: feedbackUrl+"?id='"+String(d.id)+"'&node_handle='"+d.handle+"'&action_type='RENAME_NODE'&feedback_type='disagree'",                             
+                                        url: feedbackUrl+"?id='"+d.id+"'&node_handle='"+d.handle+"'&action_type='RENAME_NODE'&feedback_type='disagree'",                             
                                         type: 'GET',
                                         success: function (resp) {
                                         },
@@ -546,6 +610,11 @@ function convertToCorrectFormat (jsonData) {
                                       .style("pointer-events", "none");
 
                                     leftTopDiv.transition()        
+                                      .duration(200)      
+                                      .style("opacity", 0)
+                                      .style("pointer-events", "none");
+
+                                    leftBottomDiv.transition()        
                                       .duration(200)      
                                       .style("opacity", 0)
                                       .style("pointer-events", "none");
