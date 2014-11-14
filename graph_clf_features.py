@@ -25,13 +25,13 @@ def ingest_graph_feedback():
 	return nodes, links
 
 
-def svm_clf(X, Y):
+def loocv_clf(X, Y, clf=svm.SVC(kernel='linear', C=1)):
 	score = 0
 	loo = cross_validation.LeaveOneOut(len(X))
 	for train, test in loo:
 		X_train, X_test = [X[i] for i in train], X[test]
 		y_train, y_test = [Y[i] for i in train], Y[test]
-		clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
+		clf.fit(X_train, y_train)
 		y_hat = clf.predict(X_test)[0]
 		print y_hat, y_test
 		if y_hat != y_test: score += 1
@@ -70,6 +70,6 @@ def extract_node_features(nodes):
 # executed by python graph_clf_features.py
 nodes, links = ingest_graph_feedback()
 X, Y, index_map = extract_node_features(nodes)
-loocv_error = svm_clf(X,Y)
-print loocv_error
+svm_loocv_error = loocv_clf(X,Y)
+print svm_loocv_error
 
