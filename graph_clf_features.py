@@ -3,6 +3,7 @@ import numpy as np
 from neo4jrestclient.client import GraphDatabase
 from sklearn import cross_validation
 from sklearn import svm
+from sklearn.naive_bayes import MultinomialNB
 
 # reads the graph_feedback.json file, and returns two lists of dictionary objects
 # - one for nodes and another for links.
@@ -71,5 +72,7 @@ def extract_node_features(nodes):
 nodes, links = ingest_graph_feedback()
 X, Y, index_map = extract_node_features(nodes)
 svm_loocv_error = loocv_clf(X,Y)
+clf = MultinomialNB()
+nb_loocv_error = loocv_clf(X, Y, clf)
 print svm_loocv_error
-
+print nb_loocv_error
