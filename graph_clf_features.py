@@ -4,6 +4,8 @@ from neo4jrestclient.client import GraphDatabase
 from sklearn import cross_validation
 from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.lda import LDA
 
 # reads the graph_feedback.json file, and returns two lists of dictionary objects
 # - one for nodes and another for links.
@@ -34,7 +36,6 @@ def loocv_clf(X, Y, clf=svm.SVC(kernel='linear', C=1)):
 		y_train, y_test = [Y[i] for i in train], Y[test]
 		clf.fit(X_train, y_train)
 		y_hat = clf.predict(X_test)[0]
-		print y_hat, y_test
 		if y_hat != y_test: score += 1
 	return float(score) / len(X)
 
@@ -72,7 +73,16 @@ def extract_node_features(nodes):
 nodes, links = ingest_graph_feedback()
 X, Y, index_map = extract_node_features(nodes)
 svm_loocv_error = loocv_clf(X,Y)
+svm_rbf_clf = svm.SVC(kernel='rbf')
+rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
 clf = MultinomialNB()
 nb_loocv_error = loocv_clf(X, Y, clf)
+logistic_regression_clf = LogisticRegression()
+lr_loocv_error = loocv_clf(X, Y, logistic_regression_clf)
+lda_clf = LDA()
+lda_loocv_error = loocv_clf(X, Y, lda_clf)
 print svm_loocv_error
+print rbf_loocv_error
 print nb_loocv_error
+print lr_loocv_error
+print lda_loocv_error
