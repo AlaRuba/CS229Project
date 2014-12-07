@@ -20,7 +20,7 @@ GRAPH_SOURCES = [u'http://pr.cs.cornell.edu/anticipation/',
 def ingest_graph_feedback():
 	nodes = []
 	links = []
-	with open('../project_data/graph_feedback.json') as feedback:
+	with open('../project_data/feedback.json') as feedback:
 		for line in feedback:
 			raw_object = json.loads(line)
 			graph_object = {'id_node': raw_object['id_node'], 
@@ -63,7 +63,7 @@ def loocv_clf(X, Y, clf=svm.SVC(kernel='linear', C=1)):
 	misclassification_error =  float(misclassified) / len(X)
 	precision = float(true_bad) / (true_bad + false_bad)
 	recall = float(true_bad) / (true_bad + false_good)
-	return precision
+	return recall
 
 # returns a list |X| of lists node features |phi_x|, a map from id_node 
 # to corresponding index for the feature representation of that node in X,
@@ -160,7 +160,7 @@ def grid_search(X, Y, bin_Y, clf):
 	C = [0.1, 1, 5, 10, 50, 100]
 	gamma = [0.0001, 0.001, 0.01, 0.1, 1] # for rbf kernel
 	degree = [1, 2, 3, 4, 5] # for polynomial kernel
-	parameters = {'kernel': kernels, 'C': C} #, 'gamma': gamma, 
+	parameters = {'kernel': kernels, 'C': C, 'gamma': gamma} 
 			#'degree': degree}
 	grid_fit = GridSearchCV(clf, parameters)
 	grid_fit.fit(X, bin_Y)
@@ -171,15 +171,19 @@ nodes, links = ingest_graph_feedback()
 # extract_link_features(links)
 X, Y, index_map = extract_node_features(nodes, multiclass=True)
 bin_Y = multiclass_labels_to_binary(Y)
-# svm_loocv_error = loocv_clf(X,Y)
-# svm_rbf_clf = svm.SVC(kernel='rbf')
-# bin_svm_loocv_error = loocv_clf(X, bin_Y)
-# rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
+svm_loocv_error = loocv_clf(X,Y)
+svm_rbf_clf = svm.SVC(kernel='rbf')
+bin_svm_loocv_error = loocv_clf(X, bin_Y)
+rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
+bin_svm_rbf = loocv_clf(X, bin_Y, svm_rbf_clf)
+best_svm = svm.SVC(kernel='linear', C=0.1, gamma=0.0001)
+best_error = loocv_clf(X, Y, best_svm)
+bin_best = loocv_clf(X, bin_Y, best_svm)
 # clf = MultinomialNB()
 # nb_loocv_error = loocv_clf(X, Y, clf)
 # bin_nb_loocv_error = loocv_clf(X, bin_Y, clf)
-grid_fit_svm = grid_search(X, Y, bin_Y, svm.SVC())
-grid_error = loocv_clf(X, bin_Y, grid_fit_svm)
+# grid_fit_svm = grid_search(X, Y, bin_Y, svm.SVC())
+# grid_error = loocv_clf(X, bin_Y, grid_fit_svm)
 # logistic_regression_clf = LogisticRegression()
 # lr_loocv_error = loocv_clf(X, bin_Y, logistic_regression_clf)
 # lda_clf = LDA()
@@ -188,13 +192,16 @@ grid_error = loocv_clf(X, bin_Y, grid_fit_svm)
 print "misclassification error on nodes:"
 print "multiclass:"
 # print "LDA", lda_loocv_error
-# print "Linear SVM", svm_loocv_error
-# print "RBF SVM", rbf_loocv_error
+print "Linear SVM", svm_loocv_error
+print "RBF SVM", rbf_loocv_error
+print "grid fit SVM", best_error
 # print "Naive Bayes", nb_loocv_error
 print "binary classification:"
 # print "logistic regression", lr_loocv_error
-# print "linear SVM", bin_svm_loocv_error
+print "linear SVM", bin_svm_loocv_error
+print "rbf SVM", bin_svm_rbf
+print "grid fit SVM", bin_best
 # print "naive bayes", bin_nb_loocv_error
 # print "LDA", bin_lda_loocv_error
-print "grid search SVM", grid_error
-print grid_fit_svm.get_params()
+# print "grid search SVM", grid_error
+# print grid_fit_svm.best_params_
