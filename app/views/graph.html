@@ -203,8 +203,8 @@ function convertToCorrectFormat (jsonData) {
       var res1 = str.substring(n+1)
 
       var str2 = jsonData.links[url]["end"];
-      var n2 = str.lastIndexOf("/");
-      var res2 = str.substring(n2+1)
+      var n2 = str2.lastIndexOf("/");
+      var res2 = str2.substring(n2+1)
 
       links.push({"source":source,"target":target,"type":jsonData.links[url]["type"], "color":"#999", "sourceUrl":res1, "targetUrl":res2});
       if (source < target) {
