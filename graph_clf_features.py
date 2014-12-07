@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.lda import LDA
+from sklearn.grid_search import GridSearchCV
 
 GRAPH_SOURCES = [u'http://pr.cs.cornell.edu/anticipation/', 
 		u'http://wordnet.princeton.edu/', 
@@ -58,6 +59,7 @@ def loocv_clf(X, Y, clf=svm.SVC(kernel='linear', C=1)):
 			else:
 				true_bad += 1
 	# report misclassification error
+	print misclassified, true_good, true_bad, false_good, false_bad
 	misclassification_error =  float(misclassified) / len(X)
 	precision = float(true_bad) / (true_bad + false_bad)
 	recall = float(true_bad) / (true_bad + false_good)
@@ -72,7 +74,7 @@ def extract_node_features(nodes, multiclass=False):
 	index_map = {}
 	gdb = GraphDatabase('http://ec2-54-187-76-157.us-west-2.compute.amazonaws.com:7474/db/data/')
 	for i, node in enumerate(nodes):
-		# phi = [handle_length, num_non_alpha in handle, num_links]
+		# phi = [handle_length, num_non_alpha in handle, belief, num_links, |indicators for source urls|]
 		phi = []
 		node_handle = node['node_handle']
 		# handle_length
@@ -107,7 +109,7 @@ def extract_node_features(nodes, multiclass=False):
 			if action_type == "'GOOD_NODE'":
 				Y.append(1)
 			else:
-				Y.append(0)
+				Y.append(2)
 		else:
 			# multiclass classification
 			if action_type == "'GOOD_NODE'":
@@ -152,24 +154,32 @@ def extract_link_features(links):
 def multiclass_labels_to_binary(Y):
 	return [int(y == 1) for y in Y]
 
-# search for best SVM parameters
-def svm_grid_search(X, Y, bin_Y):
-	kernels = ['linear', 'rbf']
-	# values for C
-
-	# values for gamma
+# search for best parameters
+def grid_search(X, Y, bin_Y, clf):
+	kernels = ('linear', 'rbf')
+	C = [0.1, 1, 5, 10, 50, 100]
+	gamma = [0.0001, 0.001, 0.01, 0.1, 1] # for rbf kernel
+	degree = [1, 2, 3, 4, 5] # for polynomial kernel
+	parameters = {'kernel': kernels, 'C': C} #, 'gamma': gamma, 
+			#'degree': degree}
+	grid_fit = GridSearchCV(clf, parameters)
+	grid_fit.fit(X, bin_Y)
+	return grid_fit
 
 # executed by python graph_clf_features.py
 nodes, links = ingest_graph_feedback()
 # extract_link_features(links)
 X, Y, index_map = extract_node_features(nodes, multiclass=True)
 bin_Y = multiclass_labels_to_binary(Y)
-svm_loocv_error = loocv_clf(X,Y)
-svm_rbf_clf = svm.SVC(kernel='rbf')
-rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
-clf = MultinomialNB()
-nb_loocv_error = loocv_clf(X, Y, clf)
-bin_nb_loocv_error = loocv_clf(X, bin_Y, clf)
+# svm_loocv_error = loocv_clf(X,Y)
+# svm_rbf_clf = svm.SVC(kernel='rbf')
+# bin_svm_loocv_error = loocv_clf(X, bin_Y)
+# rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
+# clf = MultinomialNB()
+# nb_loocv_error = loocv_clf(X, Y, clf)
+# bin_nb_loocv_error = loocv_clf(X, bin_Y, clf)
+grid_fit_svm = grid_search(X, Y, bin_Y, svm.SVC())
+grid_error = loocv_clf(X, bin_Y, grid_fit_svm)
 # logistic_regression_clf = LogisticRegression()
 # lr_loocv_error = loocv_clf(X, bin_Y, logistic_regression_clf)
 # lda_clf = LDA()
@@ -178,10 +188,13 @@ bin_nb_loocv_error = loocv_clf(X, bin_Y, clf)
 print "misclassification error on nodes:"
 print "multiclass:"
 # print "LDA", lda_loocv_error
-print "Linear SVM", svm_loocv_error
-print "RBF SVM", rbf_loocv_error
-print "Naive Bayes", nb_loocv_error
+# print "Linear SVM", svm_loocv_error
+# print "RBF SVM", rbf_loocv_error
+# print "Naive Bayes", nb_loocv_error
 print "binary classification:"
 # print "logistic regression", lr_loocv_error
-print "naive bayes", bin_nb_loocv_error
+# print "linear SVM", bin_svm_loocv_error
+# print "naive bayes", bin_nb_loocv_error
 # print "LDA", bin_lda_loocv_error
+print "grid search SVM", grid_error
+print grid_fit_svm.get_params()
