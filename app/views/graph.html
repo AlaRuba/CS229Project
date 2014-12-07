@@ -153,15 +153,15 @@ function stopped() {
 var graph = {};
 graph.links = [];
 graph.nodes = [];
-
+/*
 var tip = d3.tip()
   .attr('class', 'd3-tip')
   .offset([-10, 0])
   .html(function(d) {
     return "<strong>Frequency:</strong> <span style='color:red'>" + d.frequency + "</span>";
   })
-
-g.call(tip);
+*/
+//g.call(tip);
 
 
 var nodes = force.nodes(),
@@ -198,7 +198,15 @@ function convertToCorrectFormat (jsonData) {
       var source = seenNodes[jsonData.links[url]["start"]];
 
       var target = seenNodes[jsonData.links[url]["end"]];
-      links.push({"source":source,"target":target,"type":jsonData.links[url]["type"], "color":"#999"});
+      var str = jsonData.links[url]["start"];
+      var n = str.lastIndexOf("/");
+      var res1 = str.substring(n+1)
+
+      var str2 = jsonData.links[url]["end"];
+      var n2 = str.lastIndexOf("/");
+      var res2 = str.substring(n2+1)
+
+      links.push({"source":source,"target":target,"type":jsonData.links[url]["type"], "color":"#999", "sourceUrl":res1, "targetUrl":res2});
       if (source < target) {
         linkedByIndex[source+","+target]= 1;
       }
@@ -235,8 +243,9 @@ function convertToCorrectFormat (jsonData) {
       }
       $.ajax({
            type: "GET",
-           //url:"http://localhost:8080/get_node/"+handle,
-           url:"http://ec2-54-69-241-26.us-west-2.compute.amazonaws.com:8080/get_node/"+handle, 
+           url:"http://localhost:8080/get_node/"+handle,
+           //url:"http://graph.robobrain.me:3000/graph_viz/get_node?handle="+handle,
+           //url:"http://ec2-54-148-208-139.us-west-2.compute.amazonaws.com:8080/get_node/"+handle, 
            crossDomain: true,
            jsonp: false,
            success:function(jsonData){
@@ -253,7 +262,7 @@ function convertToCorrectFormat (jsonData) {
               link.enter()
               .append("line").attr("class", "link")
               .attr("id", function(d) {
-                var id = "link"+d.source + "to" + d.target;
+                var id = "link"+d.sourceUrl + "to" + d.targetUrl;
         
                 return id;
               })
@@ -274,7 +283,8 @@ function convertToCorrectFormat (jsonData) {
 
 
                 
-                var id = "link"+d.source.id + "to" + d.target.id;
+                var id = "link"+d.sourceUrl + "to" + d.targetUrl;
+                console.log(id);
                 var rod = d3.select("#"+id);
        
                 rod.attr("style", "fill:green; stroke:green;stroke-width:2px");
@@ -308,7 +318,7 @@ function convertToCorrectFormat (jsonData) {
                 });  
                 sourceCircle.classed("fixed", d.fixed = false);
 
-                var id = "link"+d.source.id + "to" + d.target.id;
+                var id = "link"+d.sourceUrl + "to" + d.targetUrl;
                 var rod = d3.select("#"+id);
                 rod.attr("style", "fill:green; stroke:"+d.color+";stroke-width:2px");
               });
@@ -373,7 +383,7 @@ function convertToCorrectFormat (jsonData) {
                     /*  if (active.node() === this) return reset();
                       active.classed("active", false);
                       active = d3.select(this).classed("active", true);*/
-                      var id = "link"+d.source.id + "to" + d.target.id;
+                      var id = "link"+d.sourceUrl + "to" + d.targetUrl;
                       console.log(id);
                       var rod = d3.select("#"+id);
                       rod.attr("style","fill:red; stroke:red;stroke-width:2px" );
@@ -412,7 +422,7 @@ function convertToCorrectFormat (jsonData) {
                         .on("click", function() {
 
                           $.ajax({
-                              url: feedbackUrl+"?id='"+"link"+d.source.id + "to" + d.target.id+"'&node_handle='"+d.type+"'&action_type='BAD_LINK'&feedback_type='disagee'",                             
+                              url: feedbackUrl+"?id='"+"link"+d.sourceUrl + "to" + d.targetUrl+"'&node_handle='"+d.type+"'&action_type='BAD_LINK'&feedback_type='disagee'",                             
                               type: 'GET',
                               success: function (resp) {
                               },
@@ -444,7 +454,7 @@ function convertToCorrectFormat (jsonData) {
                         .on("click", function() {
 
                           $.ajax({
-                              url: feedbackUrl+"?id='"+"link"+d.source.id + "to" + d.target.id+"'&node_handle='"+d.type+"'&action_type='GOOD_LINK'&feedback_type='agree'",                             
+                              url: feedbackUrl+"?id='"+"link"+d.sourceUrl + "to" + d.targetUrl+"'&node_handle='"+d.type+"'&action_type='GOOD_LINK'&feedback_type='agree'",                             
                               type: 'GET',
                               success: function (resp) {
                               },
@@ -701,7 +711,7 @@ function callMe() {
         var handle = pQueue.dequeue();
         handle = handle.handle;
         searchText(handle)
-    }, 1000);
+    }, 2500);
 }
 
 </script>
