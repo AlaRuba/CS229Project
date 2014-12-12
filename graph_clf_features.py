@@ -132,15 +132,20 @@ def extract_node_features(nodes, multiclass=False):
 def extract_link_features(links):
 	X = []
 	Y = []
+	print links
 	for i, link in enumerate(links):
 		phi = []
-		p = re.compile("'link(\d+)to(\d+)'")
+		p = re.compile("'link([A-Z_a-z0-9]+)To([A-Z_a-z0-9]+)'")
 		print link['id_node']
 		m = p.match(link['id_node'])
+		if m == None:
+			p = re.compile("'link([A-Z_a-z0-9]+)to([A-Z_a-z0-9]+)'")
+			m = p.match(link['id_node'])
 		start_id = m.group(1)
 		end_id = m.group(2)
+
 		gdb = GraphDatabase('http://ec2-54-187-76-157.us-west-2.compute.amazonaws.com:7474/db/data/')
-		q = "MATCH (n{id:'" + start_id + "'})-[r]-(x{id:'" + end_id + "'}) RETURN r, n, x"
+		q = "MATCH (n{handle:'" + start_id + "'})-[r]-(x{handle:'" + end_id + "'}) RETURN r, n, x"
 		node_handle = "'shoe'"
 		# q = 'MATCH (n{handle:' + node_handle + '})-[r]-(x) RETURN r, n, x'
 		result = gdb.query(q=q)
@@ -181,7 +186,7 @@ def node_count(nodes):
 
 # executed by python graph_clf_features.py
 nodes, links = ingest_graph_feedback()
-# extract_link_features(links)
+extract_link_features(links)
 #X, Y, index_map = extract_node_features(nodes, multiclass=True)
 #bin_Y = multiclass_labels_to_binary(Y)
 #svm_loocv_error = loocv_clf(X,Y)
