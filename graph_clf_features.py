@@ -20,8 +20,10 @@ GRAPH_SOURCES = [u'http://pr.cs.cornell.edu/anticipation/',
 def ingest_graph_feedback():
 	nodes = []
 	links = []
-	with open('../project_data/feedback.json') as feedback:
+	lineC = 1
+	with open('./feedback.json') as feedback:
 		for line in feedback:
+			lineC = lineC + 1
 			raw_object = json.loads(line)
 			graph_object = {'id_node': raw_object['id_node'], 
 				'feedback_type': raw_object['feedback_type'], 
@@ -32,6 +34,7 @@ def ingest_graph_feedback():
 				links.append(graph_object)
 			else:
 				nodes.append(graph_object)
+	print lineC
 	return nodes, links
 
 
@@ -166,19 +169,31 @@ def grid_search(X, Y, bin_Y, clf):
 	grid_fit.fit(X, bin_Y)
 	return grid_fit
 
+def node_count(nodes):
+	count = {}
+	print len(nodes)
+	for node in nodes:
+		if node["node_handle"] not in count:
+			count[node["node_handle"]] = 1
+		else:
+			count[node["node_handle"]] = 1+count[node["node_handle"]]
+	return len(count)
+
 # executed by python graph_clf_features.py
 nodes, links = ingest_graph_feedback()
 # extract_link_features(links)
-X, Y, index_map = extract_node_features(nodes, multiclass=True)
-bin_Y = multiclass_labels_to_binary(Y)
-svm_loocv_error = loocv_clf(X,Y)
-svm_rbf_clf = svm.SVC(kernel='rbf')
-bin_svm_loocv_error = loocv_clf(X, bin_Y)
-rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
-bin_svm_rbf = loocv_clf(X, bin_Y, svm_rbf_clf)
-best_svm = svm.SVC(kernel='linear', C=0.1, gamma=0.0001)
-best_error = loocv_clf(X, Y, best_svm)
-bin_best = loocv_clf(X, bin_Y, best_svm)
+#X, Y, index_map = extract_node_features(nodes, multiclass=True)
+#bin_Y = multiclass_labels_to_binary(Y)
+#svm_loocv_error = loocv_clf(X,Y)
+#svm_rbf_clf = svm.SVC(kernel='rbf')
+#bin_svm_loocv_error = loocv_clf(X, bin_Y)
+#rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
+#bin_svm_rbf = loocv_clf(X, bin_Y, svm_rbf_clf)
+#best_svm = svm.SVC(kernel='linear', C=0.1, gamma=0.0001)
+#best_error = loocv_clf(X, Y, best_svm)
+#bin_best = loocv_clf(X, bin_Y, best_svm)
+unique_count = node_count(nodes)
+print "Unique Count", unique_count
 # clf = MultinomialNB()
 # nb_loocv_error = loocv_clf(X, Y, clf)
 # bin_nb_loocv_error = loocv_clf(X, bin_Y, clf)
@@ -189,18 +204,18 @@ bin_best = loocv_clf(X, bin_Y, best_svm)
 # lda_clf = LDA()
 # lda_loocv_error = loocv_clf(X, Y, lda_clf)
 # bin_lda_loocv_error = loocv_clf(X, bin_Y, lda_clf)
-print "misclassification error on nodes:"
-print "multiclass:"
-# print "LDA", lda_loocv_error
-print "Linear SVM", svm_loocv_error
-print "RBF SVM", rbf_loocv_error
-print "grid fit SVM", best_error
+#print "misclassification error on nodes:"
+#print "multiclass:"
+#print "LDA", lda_loocv_error
+#print "Linear SVM", svm_loocv_error
+#print "RBF SVM", rbf_loocv_error
+#print "grid fit SVM", best_error
 # print "Naive Bayes", nb_loocv_error
-print "binary classification:"
+#print "binary classification:"
 # print "logistic regression", lr_loocv_error
-print "linear SVM", bin_svm_loocv_error
-print "rbf SVM", bin_svm_rbf
-print "grid fit SVM", bin_best
+#print "linear SVM", bin_svm_loocv_error
+#print "rbf SVM", bin_svm_rbf
+#print "grid fit SVM", bin_best
 # print "naive bayes", bin_nb_loocv_error
 # print "LDA", bin_lda_loocv_error
 # print "grid search SVM", grid_error

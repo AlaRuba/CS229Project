@@ -69,7 +69,9 @@ g.tooltip rect {
     <input type="text" id="search" class="tftextinput" name="q" size="21" maxlength="120"><input type="button" value="search" class="tfbutton" onclick="searchText();">
 </div>
 <p id="node-p">Seach for some nodes like shoe or track</p>
+<p id="node-click">Seach for some nodes like shoe or track</p>
 <p id="link-p">Currently under development, might need to wait a couple of seconds for graph to stabilize</p>
+<p id="link-click">Currently under development, might need to wait a couple of seconds for graph to stabilize</p>
 <div id="visualization">
 </div>
 <script src="scripts/lib/d3.min.js"></script>
@@ -262,14 +264,14 @@ function convertToCorrectFormat (jsonData) {
               link.enter()
               .append("line").attr("class", "link")
               .attr("id", function(d) {
-                var id = "link"+d.sourceUrl + "to" + d.targetUrl;
+                var id = "link"+d.source.handle + "to" + d.target.handle;
         
                 return id;
               })
               .style("stroke-width", function(d) { return "2px"; })
               .on("click", clickedLink)
               .on("mouseover", function(d) {
-                d3.select("#link-p").text("Current Link. From:" + d.source.handle + " To:" + d.target.handle + " Type: "+ d.type);
+                d3.select("#link-p").text("Current Link Hovered Over. From:" + d.source.handle + " To:" + d.target.handle + " Type: "+ d.type);
                 
                 var sourceId = d.source.id;  
                 var sourceCircle = d3.select("#node"+sourceId);
@@ -283,7 +285,7 @@ function convertToCorrectFormat (jsonData) {
 
 
                 
-                var id = "link"+d.sourceUrl + "to" + d.targetUrl;
+                var id = "link"+d.source.handle + "to" + d.target.handle;
                 console.log(id);
                 var rod = d3.select("#"+id);
        
@@ -318,7 +320,7 @@ function convertToCorrectFormat (jsonData) {
                 });  
                 sourceCircle.classed("fixed", d.fixed = false);
 
-                var id = "link"+d.sourceUrl + "to" + d.targetUrl;
+                var id = "link"+d.source.handle + "to" + d.target.handle;
                 var rod = d3.select("#"+id);
                 rod.attr("style", "fill:green; stroke:"+d.color+";stroke-width:2px");
               });
@@ -342,7 +344,7 @@ function convertToCorrectFormat (jsonData) {
                       }
                   ))*/
                   .on("mouseover", function(d) {
-                      d3.select("#node-p").text("Current Node:" + d.handle);   
+                      d3.select("#node-p").text("Current Node Hovered Over:" + d.handle);   
                       var id = d.id;  
                       var circle = d3.select("#node"+id);
                       circle.style("fill", "green"); 
@@ -383,12 +385,12 @@ function convertToCorrectFormat (jsonData) {
                     /*  if (active.node() === this) return reset();
                       active.classed("active", false);
                       active = d3.select(this).classed("active", true);*/
-                      var id = "link"+d.sourceUrl + "to" + d.targetUrl;
+                      var id = "link"+d.source.handle + "to" + d.target.handle;
                       console.log(id);
                       var rod = d3.select("#"+id);
                       rod.attr("style","fill:red; stroke:red;stroke-width:2px" );
                       d.color = "red";
-
+                      d3.select("#link-click").text("Current Link Selected Over. From:" + d.source.handle + " To:" + d.target.handle + " Type: "+ d.type);
                       //Fix this math
                       var x = (d.target.x + d.source.x)/2;
                       var y = (d.target.y + d.source.y)/2;
@@ -481,7 +483,7 @@ function convertToCorrectFormat (jsonData) {
                       active = d3.select(this).classed("active", true);*/
                       console.log(d);
                       var id = d.id;
-
+                      d3.select("#node-click").text("Current Node Clicked:" + d.handle);   
                       var circle = d3.select("#node"+id);
                       circle.style("fill", function(d)  {
                           d.color = "red";
