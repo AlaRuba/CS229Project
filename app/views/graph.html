@@ -456,7 +456,7 @@ function convertToCorrectFormat (jsonData) {
                         .on("click", function() {
 
                           $.ajax({
-                              url: feedbackUrl+"?id='"+"link"+d.sourceUrl + "to" + d.targetUrl+"'&node_handle='"+d.type+"'&action_type='GOOD_LINK'&feedback_type='agree'",                             
+                              url: feedbackUrl+"?id='"+"link"+d.source.handle + "to" + d.target.handle+"'&node_handle='"+d.type+"'&action_type='GOOD_LINK'&feedback_type='agree'",                             
                               type: 'GET',
                               success: function (resp) {
                               },

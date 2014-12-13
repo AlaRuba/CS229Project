@@ -132,32 +132,44 @@ def extract_node_features(nodes, multiclass=False):
 def extract_link_features(links):
 	X = []
 	Y = []
+	index_map = {}
 	print links
 	for i, link in enumerate(links):
 		phi = []
-		p = re.compile("'link([A-Z_a-z0-9]+)To([A-Z_a-z0-9]+)'")
-		print link['id_node']
+		p = re.compile("'link([A-Z_a-z\.0-9]+)To([A-Z_a-z\.0-9]+)'")
 		m = p.match(link['id_node'])
 		if m == None:
-			p = re.compile("'link([A-Z_a-z0-9]+)to([A-Z_a-z0-9]+)'")
+			p = re.compile("'link([A-Z_a-z\.0-9]+)to([A-Z_a-z\.0-9]+)'")
 			m = p.match(link['id_node'])
 		start_id = m.group(1)
 		end_id = m.group(2)
-
 		gdb = GraphDatabase('http://ec2-54-187-76-157.us-west-2.compute.amazonaws.com:7474/db/data/')
-		q = "MATCH (n{handle:'" + start_id + "'})-[r]-(x{handle:'" + end_id + "'}) RETURN r, n, x"
-		node_handle = "'shoe'"
+		q = "MATCH (n{handle:'" + start_id + "'})-[r]-(x{handle:'" + end_id + "'}) RETURN n, x, r"
 		# q = 'MATCH (n{handle:' + node_handle + '})-[r]-(x) RETURN r, n, x'
 		result = gdb.query(q=q)
 		length = len(result)
-		print length
-		print "Before Loop"
-		for x in range(0, length):
-			print result[x]
-		print "After Loop"
-		print result
-		break
-
+		prodsum = 1
+		if 'belief' in result[0][0]['data']:
+			prodsum = prodsum*result[0][0]['data']['belief']
+		if 'belief' in result[0][1]['data']:
+			prodsum = prodsum*result[0][1]['data']['belief']
+		q = "MATCH (n{handle:'" + start_id + "'})-[r]-(x) RETURN r"
+		result = gdb.query(q=q)
+		first = len(result)
+		q = "MATCH (n{handle:'" + end_id + "'})-[r]-(x) RETURN r"
+		result = gdb.query(q=q)
+		noOfLinks= first+len(result)
+		phi.append(noOfLinks)
+		feedback_type = link['feedback_type']
+		# binary classification, 'agree' = 1
+		if 'disagee' in feedback_type:
+			Y.append(2)
+		else:
+			Y.append(1)
+		index_map[link['id_node']] = i
+		X.append(phi)
+	return X, Y, index_map
+	
 # remaps an array of multiclass labels Y, to an equivalent list of binary labels
 def multiclass_labels_to_binary(Y):
 	return [int(y == 1) for y in Y]
@@ -186,10 +198,10 @@ def node_count(nodes):
 
 # executed by python graph_clf_features.py
 nodes, links = ingest_graph_feedback()
-extract_link_features(links)
+X, Y, index_map = extract_link_features(links)
 #X, Y, index_map = extract_node_features(nodes, multiclass=True)
 #bin_Y = multiclass_labels_to_binary(Y)
-#svm_loocv_error = loocv_clf(X,Y)
+svm_loocv_error = loocv_clf(X,Y)
 #svm_rbf_clf = svm.SVC(kernel='rbf')
 #bin_svm_loocv_error = loocv_clf(X, bin_Y)
 #rbf_loocv_error = loocv_clf(X, Y, svm_rbf_clf)
@@ -197,8 +209,8 @@ extract_link_features(links)
 #best_svm = svm.SVC(kernel='linear', C=0.1, gamma=0.0001)
 #best_error = loocv_clf(X, Y, best_svm)
 #bin_best = loocv_clf(X, bin_Y, best_svm)
-unique_count = node_count(nodes)
-print "Unique Count", unique_count
+#unique_count = node_count(nodes)
+#print "Unique Count", unique_count
 # clf = MultinomialNB()
 # nb_loocv_error = loocv_clf(X, Y, clf)
 # bin_nb_loocv_error = loocv_clf(X, bin_Y, clf)
